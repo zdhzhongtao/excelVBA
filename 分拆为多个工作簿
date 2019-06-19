@@ -1,0 +1,62 @@
+Sub 保留表头拆分数据为若干新工作簿()
+    Dim arr, d As Object, k, t, i&, lc%, rng As Range, c%, selectRange As Range
+    Set selectRange = Application.InputBox(prompt:="输入单元格区域或者直接选取单元格", Default:="$I:$I", Type:=8)
+    
+    'selectRange.Interior.ColorIndex = 6
+    'A = selectRange.Row
+    c = selectRange.Column
+    'MsgBox A & "行，" & B & " 列", vbInformation
+    
+    If c = 0 Then Exit Sub
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    arr = [a1].CurrentRegion
+    lc = UBound(arr, 2)
+    Set rng = [a1].Resize(, lc)
+    Set d = CreateObject("scripting.dictionary")
+    For i = 2 To UBound(arr)
+        If Not d.Exists(arr(i, c)) Then
+            Set d(arr(i, c)) = Cells(i, 1).Resize(1, lc)
+        Else
+            Set d(arr(i, c)) = Union(d(arr(i, c)), Cells(i, 1).Resize(1, lc))
+        End If
+    Next
+    k = d.Keys
+    t = d.Items
+    For i = 0 To d.Count - 1
+        With Workbooks.Add(xlWBATWorksheet)
+            Dim fileName
+            fileName = SubCheckBodyCommonOnload(k(i)) '去掉文件名的非法字符
+            
+            rng.Copy .Sheets(1).[a1]
+            t(i).Copy .Sheets(1).[a2]
+            .Sheets(1).Cells.EntireColumn.AutoFit '自动调整全工作表单元格的列宽
+            .SaveAs fileName:=ThisWorkbook.Path & "\" & fileName & ".xlsx"
+            .Close
+        End With
+    Next
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    MsgBox "完毕"
+End Sub
+
+
+
+
+
+'去掉文件名字的非法字符
+Private Function SubCheckBodyCommonOnload(pageStr)
+         Dim reg As Object
+
+            With CreateObject("VBscript.RegExp")
+                .Global = True
+                .IgnoreCase = True
+                .Pattern = "\*|\[|\]|\(|\)|\?|\:|\\|\/|\>|\<"
+                
+                SubCheckBodyCommonOnload = .Replace(pageStr, "")
+            End With
+            
+        
+End Function
+
+
